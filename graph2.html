@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Plotly Example</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #plot-container {
+            display: flex;
+            justify-content: left;
+            margin-top: 0px;
+        }
+        #plot {
+            width: 80%;
+            height: 600px;
+        }
+	.modebar {
+            background-color: 'rgba(0, 0, 0, 0)' !important;
+ 	    position: absolute !important;
+            left: 35% !important;   
+       }
+    </style>
+</head>
+<body>
+
+    <!-- Single div for both plots -->
+    <div id="plot-container">
+        <div id="plot">
+	</div>
+    </div>
+
+    <script>
+        // Generate random data
+        function generateData() {
+            const ages = [];
+            const expenses = [];
+            const where = [];
+            const gender = [];
+            const product = [];
+
+            for (let i = 0; i < 100; i++) {
+                ages.push(Math.floor(Math.random() * (73 - 18) + 18)); // Random age between 18 and 72
+                expenses.push(7 * ages[i] + 100 + Math.random() * 100 - 50); // Random expense with some noise
+                where.push(Math.random() < 0.6 ? 'Store' : 'Online');
+                gender.push(Math.random() < 0.7 ? 'Male' : 'Female');
+                product.push(['Computer', 'Phone', 'Tablet', 'Monitor'][Math.floor(Math.random() * 4)]);
+            }
+
+            return { ages, expenses, where, gender, product };
+        }
+
+        // Create the data
+        const data = generateData();
+
+        // Scatter plot data
+        const scatterData = {
+            x: data.ages,
+            y: data.expenses,
+            mode: 'markers',
+            marker: {
+                color: 'gray',
+                size: 10,
+            },
+            name: 'Age vs Expense',
+            selected: {
+                marker: { color: 'firebrick' }
+            },
+            unselected: {
+                marker: { opacity: 0.3 }
+            },
+            xaxis: 'x1', // Link to first x-axis
+            yaxis: 'y1'  // Link to first y-axis
+        };
+
+        // Parcats plot data
+        const parcatsData = {
+            type: 'parcats',
+            dimensions: [
+                {
+                    label: 'Where',
+                    values: data.where
+                },
+                {
+                    label: 'Gender',
+                    values: data.gender
+                },
+                {
+                    label: 'Product',
+                    values: data.product
+                }
+            ],
+            line: {
+                colorscale: [[0, 'gray'], [1, 'firebrick']],
+                color: new Array(data.ages.length).fill(0),
+                shape: 'hspline'              },
+            domain: { x: [0.5, 1], y: [0, 1] },  // Right half of the plot
+            xaxis: 'x2',  // Link to second x-axis
+            yaxis: 'y2'   // Link to second y-axis
+        };
+
+        // Create the layout for the figure
+        const layout = {
+            height: 300,
+            width: 800,
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            margin: {
+                l: 0, r: 45, t: 30, b: 0
+            },
+            xaxis: {
+                title: 'Age',
+                dtick: 10,
+                domain: [0, 0.45], // Left half of the plot for scatter plot
+                anchor: 'y1'       // Link to the first y-axis
+            },
+            yaxis: {
+                title: 'Expense €',
+                anchor: 'x1'       // Link to the first x-axis
+            },
+            xaxis2: {
+                domain: [0.5, 1],  // Right half of the plot for parcats plot
+                anchor: 'y2'       // Link to the second y-axis
+            },
+            yaxis2: {
+                domain: [0, 1],    // Full height of the plot for parcats plot
+                anchor: 'x2'       // Link to the second x-axis
+            },
+            dragmode: 'lasso',
+            hovermode: 'closest'
+        };
+
+        // Combine the data into one figure
+        const figure = {
+            data: [scatterData, parcatsData],
+            layout: layout
+        };
+
+        const config = {
+            displaylogo: false,
+            modeBarButtonsToRemove: ['zoomIn2d', 'zoomOut2d', 'resetScale2d', 'toImage', 'toggleSpikelines', 'hoverCompareCartesian', 'togglehover', 'hoverClosest3d'],  
+         };
+
+        // Plot the figure inside a single div
+        Plotly.newPlot('plot', figure.data, figure.layout, config);
+
+
+
+
+	
+
+        // Update color when points are selected on scatter plot
+        const updateColor = (eventData) => {
+            const selectedPoints = eventData.points;
+            const selectedIndices = selectedPoints.map(point => point.pointNumber);
+
+
+            // Reset all colors to gray
+            const newColor = new Array(data.ages.length).fill(0);
+
+            // Set color of selected points to firebrick
+            selectedIndices.forEach(index => {
+                newColor[index] = 1;
+            });
+
+
+	    
+	   
+            // Update Scatter plot with new color
+            Plotly.update('plot', {'selectedpoints': [selectedIndices]}, [0]);
+            
+            // Update Parcats plot with new color
+            Plotly.update('plot', { line: { color: newColor, shape: 'hspline'}}, [1]);
+
+            
+        };
+
+        
+        const scatterPlot = document.getElementById('plot');
+        
+	// Event listener for scatter plot selection
+	scatterPlot.on('plotly_selected', updateColor);
+
+        // Event listener for Parcats plot click
+        scatterPlot.on('plotly_click', updateColor);
+
+    </script>
+
+</body>
+</html>
